@@ -33,16 +33,16 @@ POSSIBILITY OF SUCH DAMAGE.*/
   
 */
 //#define LCDKEYPAD_SHIELD
-#define DEBUG
-#define RED_LCD
+//#define DEBUG
+//#define RED_LCD
+//#define PROTOBOARD
+#define PROTOBOARD_STANDALONE
 
 #include <LiquidCrystal.h>
 #include <MsTimer2.h>
 #include <nikonIrControl.h>
-
-#ifdef RED_LCD
-  #include <Bounce.h>
-#endif
+#include <Bounce.h>
+#include <Bounce.h>
 
 #define STATUS_VIEW 0
 #define STATUS_SELECT 1
@@ -62,20 +62,20 @@ POSSIBILITY OF SUCH DAMAGE.*/
   #define CANCEL_BUTTON_PIN 11
   #define PLUS_BUTTON_PIN 12
   #define MINUS_BUTTON_PIN 13
-#else
+#endif
+
+#ifdef PROTOBOARD_STANDALONE
   #define SET_BUTTON_PIN 19
   #define CANCEL_BUTTON_PIN 18
   #define PLUS_BUTTON_PIN 17
   #define MINUS_BUTTON_PIN 16
 #endif
 
-#ifdef RED_LCD
-  #define BOUNCE_TIME 2
-  Bounce set_button_bounce(SET_BUTTON_PIN, BOUNCE_TIME);
-  Bounce cancel_button_bounce(CANCEL_BUTTON_PIN, BOUNCE_TIME);
-  Bounce plus_button_bounce(PLUS_BUTTON_PIN, BOUNCE_TIME);
-  Bounce minus_button_bounce(MINUS_BUTTON_PIN, BOUNCE_TIME);
-#endif
+#define BOUNCE_TIME 30
+Bounce set_button_bounce(SET_BUTTON_PIN, BOUNCE_TIME);
+Bounce cancel_button_bounce(CANCEL_BUTTON_PIN, BOUNCE_TIME);
+Bounce plus_button_bounce(PLUS_BUTTON_PIN, BOUNCE_TIME);
+Bounce minus_button_bounce(MINUS_BUTTON_PIN, BOUNCE_TIME);
 
 // Posiciones en el menú de datos
 #define MENU_DATA_INPUT_ISO 0
@@ -124,12 +124,12 @@ volatile float t_output_value;
   LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #endif
 
-#ifdef RED_LCD
-  #ifdef PROTOBOARD
-    LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
-  #else
-    LiquidCrystal lcd(14, 13, 12, 11, 10, 9);
-  #endif
+#ifdef PROTOBOARD
+  LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+#endif
+
+#ifdef PROTOBOARD_STANDALONE
+  LiquidCrystal lcd(14, 13, 12, 11, 10, 9);
 #endif
 
 // Pin del led infrarrojo que dispara la cámara
@@ -358,6 +358,7 @@ void countdown_view_cancel() {
   #ifdef DEBUG
     Serial.println(F("countdown view cancel"));
   #endif
+  
   MsTimer2::stop();
   current_status = STATUS_VIEW;
   current_menu = MENU_DATA;
@@ -501,10 +502,7 @@ void loop() {
         delay(400);
       }
     #endif
-    
-  #endif
-  
-  #ifdef RED_LCD
+  #else
     // Actualiza el estado de los botones
     set_button_bounce.update();
     cancel_button_bounce.update();
