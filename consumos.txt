@@ -1,0 +1,7 @@
+Consumo lcd rojo
+  28 mA con retroiluminación
+  1.2 mA SIN retroiluminación
+
+Consumo lcd rojo con arduino en protoboard
+  49 mA con retroiluminación
+  10.7 mA SIN retroiluminación
