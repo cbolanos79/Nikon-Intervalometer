@@ -32,12 +32,17 @@ POSSIBILITY OF SUCH DAMAGE.*/
                Usa el LCD Keypad Shield como primer soporte
   
 */
+//#define LCDKEYPAD_SHIELD
+#define DEBUG
+#define RED_LCD
+
 #include <LiquidCrystal.h>
 #include <MsTimer2.h>
 #include <nikonIrControl.h>
 
-#define LCDKEYPAD_SHIELD
-#define DEBUG
+#ifdef RED_LCD
+  #include <Bounce.h>
+#endif
 
 #define STATUS_VIEW 0
 #define STATUS_SELECT 1
@@ -52,10 +57,25 @@ POSSIBILITY OF SUCH DAMAGE.*/
 #define MINUS_BUTTON 3
 
 // Botones
-#define SET_BUTTON_PIN 0
-#define CANCEL_BUTTON_PIN 1
-#define PLUS_BUTTON_PIN 2
-#define MINUS_BUTTON_PIN 3
+#ifdef PROTOBOARD
+  #define SET_BUTTON_PIN 10
+  #define CANCEL_BUTTON_PIN 11
+  #define PLUS_BUTTON_PIN 12
+  #define MINUS_BUTTON_PIN 13
+#else
+  #define SET_BUTTON_PIN 19
+  #define CANCEL_BUTTON_PIN 18
+  #define PLUS_BUTTON_PIN 17
+  #define MINUS_BUTTON_PIN 16
+#endif
+
+#ifdef RED_LCD
+  #define BOUNCE_TIME 2
+  Bounce set_button_bounce(SET_BUTTON_PIN, BOUNCE_TIME);
+  Bounce cancel_button_bounce(CANCEL_BUTTON_PIN, BOUNCE_TIME);
+  Bounce plus_button_bounce(PLUS_BUTTON_PIN, BOUNCE_TIME);
+  Bounce minus_button_bounce(MINUS_BUTTON_PIN, BOUNCE_TIME);
+#endif
 
 // Posiciones en el menú de datos
 #define MENU_DATA_INPUT_ISO 0
@@ -105,7 +125,11 @@ volatile float t_output_value;
 #endif
 
 #ifdef RED_LCD
-  LiquidCrystal lcd(3, 5, 7, 8, 10, 12);
+  #ifdef PROTOBOARD
+    LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+  #else
+    LiquidCrystal lcd(14, 13, 12, 11, 10, 9);
+  #endif
 #endif
 
 // Pin del led infrarrojo que dispara la cámara
@@ -167,6 +191,9 @@ void data_view_plus() {
   MsTimer2::start();
   
   current_menu = MENU_COUNTDOWN;
+  
+  delay(1000);
+  t_output_value--;
   
   // Dispara para empezar la exposición
   cameraSnap(ir_pin);
@@ -477,14 +504,37 @@ void loop() {
     
   #endif
   
+  #ifdef RED_LCD
+    // Actualiza el estado de los botones
+    set_button_bounce.update();
+    cancel_button_bounce.update();
+    plus_button_bounce.update();
+    minus_button_bounce.update();
+    
+    // Comprueba cuál ha sido pulsado
+    if ((set_button_bounce.read() == HIGH) && (set_button_bounce.risingEdge()))
+      pressed_button = SET_BUTTON;
+    else if ((cancel_button_bounce.read() == HIGH) && (cancel_button_bounce.risingEdge()))
+      pressed_button = CANCEL_BUTTON;
+    else if ((plus_button_bounce.read() == HIGH) && (plus_button_bounce.risingEdge()))
+      pressed_button = PLUS_BUTTON;
+    else if ((minus_button_bounce.read() == HIGH) && (minus_button_bounce.risingEdge()))
+      pressed_button = MINUS_BUTTON;   
+    if (pressed_button > -1) {
+      Serial.println(pressed_button);
+    }
+  #endif
+  
   // Según el estado, y el botón pulsado, ejecuta una acción
   if (pressed_button > -1) {
-    Serial.print(current_menu);
-    Serial.print(" ");
-    Serial.print(current_status);
-    Serial.print(" ");
-    Serial.print(pressed_button);
-    Serial.println();
+    #ifdef DEBUG
+      Serial.print(current_menu);
+      Serial.print(" ");
+      Serial.print(current_status);
+      Serial.print(" ");
+      Serial.print(pressed_button);
+      Serial.println();
+    #endif
     action_table[current_menu][current_status][pressed_button]();
   }
 }
