@@ -193,7 +193,6 @@ void data_view_plus() {
   current_menu = MENU_COUNTDOWN;
   
   delay(1000);
-  t_output_value--;
   
   // Dispara para empezar la exposición
   cameraSnap(ir_pin);
